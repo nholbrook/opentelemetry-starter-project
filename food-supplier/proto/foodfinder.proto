@@ -1,0 +1,71 @@
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.github.nholbrook.foodfinder";
+option java_outer_classname = "FoodFinderProto";
+option objc_class_prefix = "FF";
+
+package foodfinder;
+
+service FoodFinder {
+  // Finds InventoryInfo from connected vendors
+  rpc RequestSupplyInfo (SupplyRequest) returns (SupplyResponse) {}
+  rpc RequestVendorInfo (VendorRequest) returns (VendorResponse) {}
+  rpc RequestInventoryInfo (InventoryRequest) returns (InventoryResponse) {}
+}
+
+message InventoryInfo {
+  float price = 1;
+  int32 quantity = 2;
+}
+
+message VendorInfo {
+  string url = 1;
+  string name = 2;
+}
+
+message SupplyInfo {
+  InventoryInfo inventory = 1;
+  VendorInfo vendor = 2;
+}
+
+message SupplyRequest {
+  string name = 1;
+  // required int32 quantity = 2;
+}
+
+message SupplyResponse {
+  string test = 1;
+  // repeated SupplyInfo supply = 1;
+}
+
+message InventoryRequest {
+  string name = 1; 
+}
+
+message InventoryResponse {
+  InventoryInfo inventory = 1;
+}
+
+message VendorRequest {
+  string name = 1;
+}
+
+message VendorResponse {
+  repeated VendorInfo vendors = 1;
+}
+

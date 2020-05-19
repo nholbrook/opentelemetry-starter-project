@@ -1,0 +1,15 @@
+FROM ubuntu:bionic
+
+RUN apt-get update && \
+	apt-get install -y git build-essential autoconf libtool pkg-config cmake
+
+ENV GRPC_RELEASE_TAG v1.29.0
+ENV BUILD_PATH /var/local/dev/grpc
+
+RUN git clone --recurse-submodules -b ${GRPC_RELEASE_TAG} https://github.com/grpc/grpc /var/local/dev/grpc && \
+	cd /var/local/dev/grpc
+
+RUN mkdir -p cmake/build && cd cmake/build && cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF \
+	-DCMAKE_INSTALL_PREFIX=${BUILD_PATH} /var/local/dev/grpc && make -j && make install && cd ../..
+
+
