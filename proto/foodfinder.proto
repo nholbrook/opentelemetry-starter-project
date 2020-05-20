@@ -22,11 +22,17 @@ option objc_class_prefix = "FF";
 package foodfinder;
 
 service FoodFinder {
-  // Finds InventoryInfo from connected vendors
   rpc RequestSupplyInfo (SupplyRequest) returns (SupplyResponse) {}
-  rpc RequestVendorInfo (VendorRequest) returns (VendorResponse) {}
-  rpc RequestInventoryInfo (InventoryRequest) returns (InventoryResponse) {}
 }
+
+service Supplier {
+  rpc RequestVendorInfo (VendorRequest) returns (VendorResponse) {}
+}
+
+service Vendor {
+  rpc RequestInventoryInfo (InventoryRequest) returns (InventoryResponse) {}  
+}
+
 
 message InventoryInfo {
   float price = 1;
