@@ -26,65 +26,47 @@
 
 #include "foodfinder.grpc.pb.h"
 
+using std::string;
+using std::vector;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
+using grpc::StatusCode;
+using foodfinder::Supplier;
 using foodfinder::SupplyRequest;
-using foodfinder::SupplyResponse;
-using foodfinder::VendorRequest;
-using foodfinder::VendorResponse;
-using foodfinder::InventoryRequest;
-using foodfinder::InventoryResponse;
-using foodfinder::FoodFinder;
+using foodfinder::VendorInfo;
 
-class SupplierClient {
-  public:
-    SupplierClient(std::shared_ptr<Channel> channel)
-      : stub_(FoodFinder::NewStub(channel)) {}
+// TEMP: Temporary list of vendors. This will evebtually be moved to a MySQL DB.
+vector<VendorInfo> vendors;
 
-    std::string RequestVendorInfo(const std::string& name) {
-      VendorRequest request;
-      request.set_name(name);
-
-      VendorResponse response;
-      ClientContext context;
-
-      Status status = stub_->RequestVendorInfo(&context, request, &response);
-
-      if (status.ok()) {
-        return response.vendors().Get(0).url();
-      } else {
-        std::cout << status.error_code() << ": " << status.error_message()
-		<< std::endl;
-	return "RPC failed";
-      }
-    }
-
-  private:
-    std::unique_ptr<FoodFinder::Stub> stub_;
+VendorInfo MakeVendor(string name, string url) {
+  VendorInfo v;
+  v.set_name(name);
+  v.set_url(url);
+  return v;
 };
 
-class FoodFinderImpl final : public FoodFinder::Service {
-  Status RequestSupplyInfo(ServerContext* context, const SupplyRequest* request,
-		 SupplyResponse* response) override {
-    
-    SupplierClient supplier(grpc::CreateChannel(
-			    "localhost:50051", grpc::InsecureChannelCredentials()));
-    std::string name("flour");
-    std::string vendor_info = supplier.RequestVendorInfo(name);
-    std::cout << "Vendors recieved: " << vendor_info << std::endl;  
+class SupplierImpl final : public Supplier::Service {
+  Status RequestVendorInfo(ServerContext* context, const SupplyRequest* request,
+		VendorInfo* response) override {
 
-    response->set_test("test response");
-    return Status::OK;
+    for (auto ptr = vendors.begin(); ptr != vendors.end(); ++ptr) {
+      // if (ptr->name() == request->name()) {
+        *response = *ptr;
+        return Status::OK;
+      // }
+    }
+
+    return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
   } 
 };
 
 void RunServer() {
-  std::string server_address("0.0.0.0:50051");
-  FoodFinderImpl service;
+  std::string server_address("0.0.0.0:50052");
+  SupplierImpl service;
 
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
@@ -96,7 +78,7 @@ void RunServer() {
   builder.RegisterService(&service);
   // Finally assemble the server.
   std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << server_address << std::endl;
+  std::cout << "Supplier server listening on " << server_address << std::endl;
 
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.
@@ -104,6 +86,14 @@ void RunServer() {
 }
 
 int main(int argc, char** argv) {
+  // TEMP: Populate temporary list of vendors. This will evebtually be moved to a MySQL DB.
+  vendors.push_back(MakeVendor("Aldi", "localhost:50060"));
+  vendors.push_back(MakeVendor("Trader Joe's", "localhost:50061"));
+  vendors.push_back(MakeVendor("Whole Foods", "localhost:50062"));
+  vendors.push_back(MakeVendor("Publix", "localhost:50063"));
+  vendors.push_back(MakeVendor("Kroger", "localhost:50064"));
+  vendors.push_back(MakeVendor("Meijer", "localhost:50065"));
+
   RunServer();
 
   return 0;

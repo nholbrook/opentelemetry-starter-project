@@ -29,9 +29,10 @@
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
-using foodfinder::SupplyRequest;
-using foodfinder::SupplyResponse;
 using foodfinder::FoodFinder;
+using foodfinder::SupplyRequest;
+using foodfinder::SupplyInfo;
+using foodfinder::VendorInfo;
 
 class FoodFinderClient {
   public:
@@ -42,18 +43,17 @@ class FoodFinderClient {
       SupplyRequest request;
       request.set_name(name);
 
-      SupplyResponse response;
+      SupplyInfo response;
       ClientContext context;
 
       Status status = stub_->RequestSupplyInfo(&context, request, &response);
 
       if (status.ok()) {
-        return response.test();
+        return response.vendor().name();
       } else {
-	std::cout << status.error_details() << std::endl;
-        std::cout << status.error_code() << ": " << status.error_message()
-		<< std::endl;
-	return "RPC failed";
+	      std::cout << status.error_details() << std::endl;
+        std::cout << status.error_code() << ": " << status.error_message() << std::endl;
+	      return "RPC failed";
       }
     }
 
@@ -64,7 +64,7 @@ class FoodFinderClient {
 int main(int argc, char** argv) {
   FoodFinderClient client(grpc::CreateChannel(
 			  "localhost:50051", grpc::InsecureChannelCredentials()));
-  std::string name("flour");
+  std::string name("milk");
   std::string response = client.RequestSupplyInfo(name);
   std::cout << "Client received: " << response << std::endl;
 

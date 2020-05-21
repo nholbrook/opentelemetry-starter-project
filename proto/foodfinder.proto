@@ -22,26 +22,20 @@ option objc_class_prefix = "FF";
 package foodfinder;
 
 service FoodFinder {
-  rpc RequestSupplyInfo (SupplyRequest) returns (SupplyResponse) {}
+  rpc RequestSupplyInfo (SupplyRequest) returns (SupplyInfo) {}
 }
 
 service Supplier {
-  rpc RequestVendorInfo (VendorRequest) returns (VendorResponse) {}
+  rpc RequestVendorInfo (SupplyRequest) returns (VendorInfo) {}
 }
 
 service Vendor {
-  rpc RequestInventoryInfo (InventoryRequest) returns (InventoryResponse) {}  
+  rpc RequestInventoryInfo (SupplyRequest) returns (InventoryInfo) {}  
 }
 
-
-message InventoryInfo {
-  float price = 1;
-  int32 quantity = 2;
-}
-
-message VendorInfo {
-  string url = 1;
-  string name = 2;
+message SupplyRequest {
+  string name = 1;
+  uint32 quantity = 2;
 }
 
 message SupplyInfo {
@@ -49,29 +43,12 @@ message SupplyInfo {
   VendorInfo vendor = 2;
 }
 
-message SupplyRequest {
-  string name = 1;
-  // required int32 quantity = 2;
+message VendorInfo {
+  string url = 1;
+  string name = 2;
 }
 
-message SupplyResponse {
-  string test = 1;
-  // repeated SupplyInfo supply = 1;
+message InventoryInfo {
+  float price = 1;
+  uint32 quantity = 2;
 }
-
-message InventoryRequest {
-  string name = 1; 
-}
-
-message InventoryResponse {
-  InventoryInfo inventory = 1;
-}
-
-message VendorRequest {
-  string name = 1;
-}
-
-message VendorResponse {
-  repeated VendorInfo vendors = 1;
-}
-

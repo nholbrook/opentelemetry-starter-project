@@ -38,9 +38,12 @@ PROTOS_PATH = ./proto/
 
 vpath %.proto $(PROTOS_PATH)
 
-all: food-finder food-finder-client
+all: food-finder-server supplier-server food-finder-client
 
-food-finder: foodfinder.pb.o foodfinder.grpc.pb.o server/server.o
+food-finder-server: foodfinder.pb.o foodfinder.grpc.pb.o food-finder/food-finder.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+supplier-server: foodfinder.pb.o foodfinder.grpc.pb.o supplier/supplier.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 food-finder-client: foodfinder.pb.o foodfinder.grpc.pb.o client/client.o
@@ -55,4 +58,4 @@ food-finder-client: foodfinder.pb.o foodfinder.grpc.pb.o client/client.o
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=. $<
 
 clean:
-	rm -f *.o *.pb.cc *.pb.h server/server client/client
+	rm -f *.o *.pb.cc *.pb.h food-finder/food-finder supplier/supplier vendor/vendor client/client
