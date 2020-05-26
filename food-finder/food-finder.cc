@@ -47,7 +47,7 @@ class SupplierClient {
     SupplierClient(std::shared_ptr<Channel> channel)
       : stub_(Supplier::NewStub(channel)) {}
 
-    VendorInfo RequestVendorInfo(const std::string& name) {
+    std::vector<VendorInfo> RequestVendorInfo(const std::string& name) {
       SupplyRequest request;
       request.set_name(name);
 
@@ -58,10 +58,38 @@ class SupplierClient {
         stub_->RequestVendorInfo(&context, request));
 
       while (reader->Read(&info)) {
-        std::cout << "Potential vendor found" << info.name() << std::endl;
+        potential_vendors.push_back(info);
       }
 
       Status status = reader->Finish();
+
+      if (status.ok()) {
+        std::cout << "Found a total of (" << potential_vendors.size() << ") potential vendors" << std::endl;
+        return potential_vendors;
+      } else {
+        std::cout << status.error_code() << ": " << status.error_message() << std::endl;
+        return potential_vendors;
+      }
+    }
+
+  private:
+    std::vector<VendorInfo> potential_vendors;
+    std::unique_ptr<Supplier::Stub> stub_;
+};
+
+class VendorClient {
+  public:
+    VendorClient(std::shared_ptr<Channel> channel)
+      : stub_(Vendor::NewStub(channel)) {}
+
+    InventoryInfo RequestInventoryInfo(const std::string& name) {
+      SupplyRequest request;
+      request.set_name(name);
+
+      ClientContext context;
+      InventoryInfo info;
+
+      Status status = stub_->RequestInventoryInfo(&context, request, &info);
 
       if (status.ok()) {
         return info;
@@ -72,7 +100,7 @@ class SupplierClient {
     }
 
   private:
-    std::unique_ptr<Supplier::Stub> stub_;
+    std::unique_ptr<Vendor::Stub> stub_;
 };
 
 class FoodFinderImpl final : public FoodFinder::Service {
@@ -80,12 +108,19 @@ class FoodFinderImpl final : public FoodFinder::Service {
      SupplyInfo* response) {
     
     SupplierClient supplier(grpc::CreateChannel(
-         "localhost:50052", grpc::InsecureChannelCredentials()));
-    VendorInfo vendor_info = supplier.RequestVendorInfo(request->name());
+      "localhost:50052", grpc::InsecureChannelCredentials()));
+    VendorClient vendor(grpc::CreateChannel(
+      "localhost:50053", grpc::InsecureChannelCredentials()));
+
+    std::vector<VendorInfo> potential_vendors = supplier.RequestVendorInfo(request->name());
+
+    for (size_t i = 0; i < potential_vendors.size(); ++i) {
+      InventoryInfo info = vendor.RequestInventoryInfo(request->name());
+      std::cout << i << ": " << potential_vendors.at(i).name() << " - has " << info.quantity() << " in stock" << std::endl;
+    }
 
     VendorInfo* v_ptr = response->mutable_vendor();
-    *v_ptr = vendor_info;
-    std::cout << "Vendor recieved: " << response->vendor().name() << std::endl;
+    *v_ptr = potential_vendors.at(0);
     return Status::OK;
   } 
 };

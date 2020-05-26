@@ -33,42 +33,32 @@ using grpc::ClientContext;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
-using grpc::ServerWriter;
 using grpc::Status;
 using grpc::StatusCode;
-using foodfinder::Supplier;
+using foodfinder::Vendor;
 using foodfinder::SupplyRequest;
-using foodfinder::VendorInfo;
+using foodfinder::InventoryInfo;
 
-// TEMP: Temporary list of vendors. This will evebtually be moved to a MySQL DB.
-vector<VendorInfo> vendors;
-
-VendorInfo MakeVendor(string name, string url) {
-  VendorInfo v;
-  v.set_name(name);
-  v.set_url(url);
-  return v;
+InventoryInfo MakeInventory(float price, int quantity) {
+  InventoryInfo i;
+  i.set_price(price);
+  i.set_quantity(quantity);
+  return i;
 };
 
-class SupplierImpl final : public Supplier::Service {
-  Status RequestVendorInfo(ServerContext* context, const SupplyRequest* request,
-		ServerWriter<VendorInfo>* writer) override {
-    std::cout << "Request for Vendors with " << request->name() << " in stock" << std::endl;
-
-    if (vendors.begin() == vendors.end()) {
-      return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
-    } else {
-      for (auto ptr = vendors.begin(); ptr != vendors.end(); ++ptr) {
-        writer->Write(*ptr);
-      }
+class VendorImpl final : public Vendor::Service {
+  Status RequestInventoryInfo(ServerContext* context, const SupplyRequest* request,
+		InventoryInfo* response) override {
+      std::cout << "Request for Inventory for " << request->name() << std::endl;
+      InventoryInfo info = MakeInventory(1.73, 23);
+      *response = info;
       return Status::OK;
-    }
-  }
+  } 
 };
 
 void RunServer() {
-  std::string server_address("0.0.0.0:50052");
-  SupplierImpl service;
+  std::string server_address("0.0.0.0:50053");
+  VendorImpl service;
 
   grpc::EnableDefaultHealthCheckService(true);
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
@@ -80,7 +70,7 @@ void RunServer() {
   builder.RegisterService(&service);
   // Finally assemble the server.
   std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Supplier server listening on " << server_address << std::endl;
+  std::cout << "Vendor server listening on " << server_address << std::endl;
 
   // Wait for the server to shutdown. Note that some other thread must be
   // responsible for shutting down the server for this call to ever return.
@@ -88,14 +78,6 @@ void RunServer() {
 }
 
 int main(int argc, char** argv) {
-  // TEMP: Populate temporary list of vendors. This will evebtually be moved to a MySQL DB.
-  vendors.push_back(MakeVendor("Aldi", "localhost:50060"));
-  vendors.push_back(MakeVendor("Trader Joe's", "localhost:50061"));
-  vendors.push_back(MakeVendor("Whole Foods", "localhost:50062"));
-  vendors.push_back(MakeVendor("Publix", "localhost:50063"));
-  vendors.push_back(MakeVendor("Kroger", "localhost:50064"));
-  vendors.push_back(MakeVendor("Meijer", "localhost:50065"));
-
   RunServer();
 
   return 0;
