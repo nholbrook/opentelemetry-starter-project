@@ -33,6 +33,7 @@ using grpc::ClientContext;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
+using grpc::ServerWriter;
 using grpc::Status;
 using grpc::StatusCode;
 using foodfinder::Supplier;
@@ -51,17 +52,17 @@ VendorInfo MakeVendor(string name, string url) {
 
 class SupplierImpl final : public Supplier::Service {
   Status RequestVendorInfo(ServerContext* context, const SupplyRequest* request,
-		VendorInfo* response) override {
+		ServerWriter<VendorInfo>* writer) override {
 
-    for (auto ptr = vendors.begin(); ptr != vendors.end(); ++ptr) {
-      // if (ptr->name() == request->name()) {
-        *response = *ptr;
-        return Status::OK;
-      // }
+    if (vendors.begin() == vendors.end()) {
+      return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
+    } else {
+      for (auto ptr = vendors.begin(); ptr != vendors.end(); ++ptr) {
+        writer->Write(*ptr);
+      }
+      return Status::OK;
     }
-
-    return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
-  } 
+  }
 };
 
 void RunServer() {

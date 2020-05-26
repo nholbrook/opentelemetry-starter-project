@@ -32,6 +32,7 @@ using grpc::ClientContext;
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
+using grpc::ClientReader;
 using grpc::Status;
 using foodfinder::FoodFinder;
 using foodfinder::Supplier;
@@ -51,15 +52,22 @@ class SupplierClient {
       request.set_name(name);
 
       ClientContext context;
-      VendorInfo response;
+      VendorInfo info;
 
-      Status status = stub_->RequestVendorInfo(&context, request, &response);
+      std::unique_ptr<ClientReader<VendorInfo>> reader (
+        stub_->RequestVendorInfo(&context, request));
+
+      while (reader->Read(&info)) {
+        std::cout << "Potential vendor found" << info.name() << std::endl;
+      }
+
+      Status status = reader->Finish();
 
       if (status.ok()) {
-        return response;
+        return info;
       } else {
         std::cout << status.error_code() << ": " << status.error_message() << std::endl;
-        return response;
+        return info;
       }
     }
 
