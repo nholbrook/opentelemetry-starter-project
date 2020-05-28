@@ -25,6 +25,7 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
 #include "foodfinder.grpc.pb.h"
+#include "helpers.cc"
 
 using std::string;
 using std::vector;
@@ -39,16 +40,9 @@ using foodfinder::Vendor;
 using foodfinder::SupplyRequest;
 using foodfinder::InventoryInfo;
 
-InventoryInfo MakeInventory(float price, int quantity) {
-  InventoryInfo i;
-  i.set_price(price);
-  i.set_quantity(quantity);
-  return i;
-};
-
 class VendorImpl final : public Vendor::Service {
-  Status RequestInventoryInfo(ServerContext* context, const SupplyRequest* request,
-		InventoryInfo* response) override {
+  Status RequestInventoryInfo(ServerContext* context, 
+    const SupplyRequest* request, InventoryInfo* response) override {
       std::cout << "Request for Inventory for " << request->name() << std::endl;
       InventoryInfo info = MakeInventory(1.73, 23);
       *response = info;

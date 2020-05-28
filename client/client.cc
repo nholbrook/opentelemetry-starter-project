@@ -39,7 +39,7 @@ class FoodFinderClient {
     FoodFinderClient(std::shared_ptr<Channel> channel)
       : stub_(FoodFinder::NewStub(channel)) {}
 
-    std::string RequestSupplyInfo(const std::string& name) {
+    Status RequestSupplyInfo(const std::string& name, SupplyInfo& s_i) {
       SupplyRequest request;
       request.set_name(name);
 
@@ -49,12 +49,13 @@ class FoodFinderClient {
       Status status = stub_->RequestSupplyInfo(&context, request, &response);
 
       if (status.ok()) {
-        return response.vendor().name();
+        s_i = response;
       } else {
 	      std::cout << status.error_details() << std::endl;
-        std::cout << status.error_code() << ": " << status.error_message() << std::endl;
-	      return "RPC failed";
+        std::cout << status.error_code() << ": " << status.error_message()
+          << std::endl;
       }
+      return status;
     }
 
   private:
@@ -62,11 +63,40 @@ class FoodFinderClient {
 };
 
 int main(int argc, char** argv) {
-  FoodFinderClient client(grpc::CreateChannel(
-			  "localhost:50051", grpc::InsecureChannelCredentials()));
-  std::string name("milk");
-  std::string response = client.RequestSupplyInfo(name);
-  std::cout << "Client received: " << response << std::endl;
+  std::string target_str;
+  std::string arg_str("--target");
+  if (argc > 1) {
+    std::string arg_val = argv[1];
+    size_t start_pos = arg_val.find(arg_str);
+    if (start_pos != std::string::npos) {
+      start_pos += arg_str.size();
+      if (arg_val[start_pos] == '=') {
+        target_str = arg_val.substr(start_pos + 1);
+      } else {
+        std::cout << "The only correct argument syntax is --target="
+          << std::endl;
+        return 0;
+      }
+    } else {
+      std::cout << "The only acceptable argument is --target=" << std::endl;
+      return 0;
+    }
+  } else {
+    target_str = "localhost:50051";
+  }
 
+  FoodFinderClient client(grpc::CreateChannel(
+			  target_str, grpc::InsecureChannelCredentials()));
+  std::string name = "milk";
+  SupplyInfo s_i;
+  Status status = client.RequestSupplyInfo(name, s_i);
+  if (status.ok()) {
+    std::cout << "Best Price for " << name << " found at "
+      << s_i.vendor().name() << " for a price of $" << s_i.inventory().price()
+      << std::endl;
+  } else {
+    std::cout << "Could not find " << name << " at any indexed stores"
+      << std::endl;
+  }
   return 0;
 }

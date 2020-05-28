@@ -25,6 +25,7 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
 #include "foodfinder.grpc.pb.h"
+#include "helpers.cc"
 
 using std::string;
 using std::vector;
@@ -43,22 +44,16 @@ using foodfinder::VendorInfo;
 // TEMP: Temporary list of vendors. This will evebtually be moved to a MySQL DB.
 vector<VendorInfo> vendors;
 
-VendorInfo MakeVendor(string name, string url) {
-  VendorInfo v;
-  v.set_name(name);
-  v.set_url(url);
-  return v;
-};
-
 class SupplierImpl final : public Supplier::Service {
   Status RequestVendorInfo(ServerContext* context, const SupplyRequest* request,
 		ServerWriter<VendorInfo>* writer) override {
-    std::cout << "Request for Vendors with " << request->name() << " in stock" << std::endl;
+    std::cout << "Request for Vendors with " << request->name()
+      << " in stock" << std::endl;
 
-    if (vendors.begin() == vendors.end()) {
+    if (vendors.empty()) {
       return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
     } else {
-      for (auto ptr = vendors.begin(); ptr != vendors.end(); ++ptr) {
+      for (const auto& vendor : vendors) {
         writer->Write(*ptr);
       }
       return Status::OK;
@@ -88,13 +83,14 @@ void RunServer() {
 }
 
 int main(int argc, char** argv) {
-  // TEMP: Populate temporary list of vendors. This will evebtually be moved to a MySQL DB.
+  // TEMP: Populate temporary list of vendors. 
+  // This will evebtually be moved to a MySQL DB.
   vendors.push_back(MakeVendor("Aldi", "localhost:50060"));
-  vendors.push_back(MakeVendor("Trader Joe's", "localhost:50061"));
-  vendors.push_back(MakeVendor("Whole Foods", "localhost:50062"));
-  vendors.push_back(MakeVendor("Publix", "localhost:50063"));
-  vendors.push_back(MakeVendor("Kroger", "localhost:50064"));
-  vendors.push_back(MakeVendor("Meijer", "localhost:50065"));
+  // vendors.push_back(MakeVendor("Trader Joe's", "localhost:50061"));
+  // vendors.push_back(MakeVendor("Whole Foods", "localhost:50062"));
+  // vendors.push_back(MakeVendor("Publix", "localhost:50063"));
+  // vendors.push_back(MakeVendor("Kroger", "localhost:50064"));
+  // vendors.push_back(MakeVendor("Meijer", "localhost:50065"));
 
   RunServer();
 

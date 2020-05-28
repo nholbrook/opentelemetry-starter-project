@@ -4,7 +4,7 @@ WORKDIR /data
 
 COPY supplier/supplier.cc ./supplier/
 COPY proto/foodfinder.proto ./proto/
-COPY Makefile ./
+COPY Makefile helpers.cc ./
 
 RUN make supplier-server
 

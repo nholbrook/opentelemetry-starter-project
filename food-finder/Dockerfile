@@ -4,7 +4,7 @@ WORKDIR /data
 
 COPY food-finder/food-finder.cc ./food-finder/
 COPY proto/foodfinder.proto ./proto/
-COPY Makefile ./
+COPY Makefile helpers.cc ./
 
 RUN make food-finder-server
 
