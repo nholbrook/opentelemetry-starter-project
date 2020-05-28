@@ -69,7 +69,7 @@ class FoodFinderImpl final : public FoodFinderService::Service {
       for (size_t i_i = 0; i_i < inventory.inventory_size(); ++i_i) {
         Item current_item = inventory.inventory(i_i);
         std::cout << current_vendor.name() << " - has " 
-          << current_item.quantity() << " of " << request->name() <<
+          << current_item.quantity() << " of " << current_item.name() <<
           " in stock at a price of " << current_item.price() << std::endl;
         if (current_item.name() == request->name()
           && current_item.quantity() >= request->quantity() 
