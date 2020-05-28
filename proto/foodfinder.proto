@@ -21,33 +21,48 @@ option objc_class_prefix = "FF";
 
 package foodfinder;
 
+// The Food Finder service definition. This is the primary interface that the
+// client calls.
 service FoodFinder {
   rpc RequestSupplyInfo (SupplyRequest) returns (SupplyInfo) {}
 }
 
+// The Supplier service definition. This service contains an index of vendors
+// and will only be called by the Food Finder service.
 service Supplier {
   rpc RequestVendorInfo (SupplyRequest) returns (stream VendorInfo) {}
 }
 
+// The Vendor service definition. This service will be ran multiple times to
+// simulate multiple vendors. It will contain a vendors current inventory and
+// will only be called by the Food Finder service. 
 service Vendor {
   rpc RequestInventoryInfo (SupplyRequest) returns (InventoryInfo) {}  
 }
 
+// The request message from a end user containing the name of a food items and
+// the desired quantity
 message SupplyRequest {
   string name = 1;
   uint32 quantity = 2;
 }
 
+// The response message from the Food Finder service containing a vendor and its
+// inventory information
 message SupplyInfo {
   InventoryInfo inventory = 1;
   VendorInfo vendor = 2;
 }
 
+// The response message from the Supplier service containing the name of a
+// vendor and its URL
 message VendorInfo {
   string url = 1;
   string name = 2;
 }
 
+// The response message from the Vendor service containing the price of an item
+/ and its quantity
 message InventoryInfo {
   float price = 1;
   uint32 quantity = 2;
