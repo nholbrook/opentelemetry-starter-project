@@ -27,6 +27,8 @@
 
 #include "foodfinder.grpc.pb.h"
 #include "helpers.cc"
+#include "supplier-client.cc"
+#include "vendor-client.cc"
 
 using std::string;
 using grpc::Channel;
@@ -46,54 +48,6 @@ using foodfinder::VendorResponse;
 using foodfinder::InventoryResponse;
 using foodfinder::Vendor;
 using foodfinder::Item;
-
-// TODO - move to seperate file
-class VendorClient {
-  public:
-    VendorClient(std::shared_ptr<Channel> channel)
-      : stub_(VendorService::NewStub(channel)) {}
-
-    InventoryResponse RequestInventoryList(const SupplyRequest& request) {
-      ClientContext context;
-      InventoryResponse inventory;
-      Status status = stub_->RequestInventoryList(&context, request, &inventory);
-
-      if (status.ok()) {
-        return inventory;
-      } else {
-        std::cout << status.error_code() << ": " << status.error_message() 
-          << std::endl;
-        return inventory;
-      }
-    }
-
-  private:
-    std::unique_ptr<VendorService::Stub> stub_;
-};
-
-// TODO - move to seperate file
-class SupplierClient {
-  public:
-    SupplierClient(std::shared_ptr<Channel> channel)
-      : stub_(SupplierService::NewStub(channel)) {}
-
-    VendorResponse RequestVendorList(const SupplyRequest& request) {
-      ClientContext context;
-      VendorResponse vendors;
-      Status status = stub_->RequestVendorList(&context, request, &vendors);
-
-      if (status.ok()) {
-        return vendors;
-      } else {
-        std::cout << status.error_code() << ": " << status.error_message()
-          << std::endl;
-          return vendors;
-      }
-    }
-
-  private:
-    std::unique_ptr<SupplierService::Stub> stub_;
-};
 
 class FoodFinderImpl final : public FoodFinderService::Service {
   Status RequestSupplyInfo(ServerContext* context, const SupplyRequest* request,
