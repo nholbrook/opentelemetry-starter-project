@@ -37,16 +37,17 @@ using grpc::ServerContext;
 using grpc::ServerWriter;
 using grpc::Status;
 using grpc::StatusCode;
-using foodfinder::Supplier;
+using foodfinder::SupplierService;
 using foodfinder::SupplyRequest;
-using foodfinder::VendorInfo;
+using foodfinder::Vendor;
+using foodfinder::VendorResponse;
 
 // TEMP: Temporary list of vendors. This will evebtually be moved to a MySQL DB.
-vector<VendorInfo> vendors;
+vector<Vendor> vendors;
 
-class SupplierImpl final : public Supplier::Service {
-  Status RequestVendorInfo(ServerContext* context, const SupplyRequest* request,
-		ServerWriter<VendorInfo>* writer) override {
+class SupplierImpl final : public SupplierService::Service {
+  Status RequestVendorList(ServerContext* context, const SupplyRequest* request,
+		VendorResponse* response) override {
     std::cout << "Request for Vendors with " << request->name()
       << " in stock" << std::endl;
 
@@ -54,7 +55,9 @@ class SupplierImpl final : public Supplier::Service {
       return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
     } else {
       for (const auto& vendor : vendors) {
-        writer->Write(*ptr);
+        Vendor* current_vendor = response->add_vendors();
+        current_vendor->set_url(vendor.url());
+        current_vendor->set_name(vendor.name());
       }
       return Status::OK;
     }

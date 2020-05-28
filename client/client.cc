@@ -29,21 +29,21 @@
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
-using foodfinder::FoodFinder;
+using foodfinder::FoodFinderService;
 using foodfinder::SupplyRequest;
-using foodfinder::SupplyInfo;
-using foodfinder::VendorInfo;
+using foodfinder::SupplyResponse;
+using foodfinder::Vendor;
 
 class FoodFinderClient {
   public:
     FoodFinderClient(std::shared_ptr<Channel> channel)
-      : stub_(FoodFinder::NewStub(channel)) {}
+      : stub_(FoodFinderService::NewStub(channel)) {}
 
-    Status RequestSupplyInfo(const std::string& name, SupplyInfo& s_i) {
+    Status RequestSupplyInfo(const std::string& name, SupplyResponse& s_i) {
       SupplyRequest request;
       request.set_name(name);
 
-      SupplyInfo response;
+      SupplyResponse response;
       ClientContext context;
 
       Status status = stub_->RequestSupplyInfo(&context, request, &response);
@@ -59,43 +59,23 @@ class FoodFinderClient {
     }
 
   private:
-    std::unique_ptr<FoodFinder::Stub> stub_;
+    std::unique_ptr<FoodFinderService::Stub> stub_;
 };
 
 int main(int argc, char** argv) {
-  std::string target_str;
-  std::string arg_str("--target");
-  if (argc > 1) {
-    std::string arg_val = argv[1];
-    size_t start_pos = arg_val.find(arg_str);
-    if (start_pos != std::string::npos) {
-      start_pos += arg_str.size();
-      if (arg_val[start_pos] == '=') {
-        target_str = arg_val.substr(start_pos + 1);
-      } else {
-        std::cout << "The only correct argument syntax is --target="
-          << std::endl;
-        return 0;
-      }
-    } else {
-      std::cout << "The only acceptable argument is --target=" << std::endl;
-      return 0;
-    }
-  } else {
-    target_str = "localhost:50051";
-  }
+  std::string food_str = "milk";
+  std::string target_str = "localhost:50051";
 
   FoodFinderClient client(grpc::CreateChannel(
 			  target_str, grpc::InsecureChannelCredentials()));
-  std::string name = "milk";
-  SupplyInfo s_i;
-  Status status = client.RequestSupplyInfo(name, s_i);
+  SupplyResponse s_i;
+  Status status = client.RequestSupplyInfo(food_str, s_i);
   if (status.ok()) {
-    std::cout << "Best Price for " << name << " found at "
+    std::cout << "Best Price for " << food_str << " found at "
       << s_i.vendor().name() << " for a price of $" << s_i.inventory().price()
       << std::endl;
   } else {
-    std::cout << "Could not find " << name << " at any indexed stores"
+    std::cout << "Could not find " << food_str << " at any indexed stores"
       << std::endl;
   }
   return 0;

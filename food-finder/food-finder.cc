@@ -37,112 +37,106 @@ using grpc::ServerContext;
 using grpc::ClientReader;
 using grpc::Status;
 using grpc::StatusCode;
-using foodfinder::FoodFinder;
-using foodfinder::Supplier;
-using foodfinder::Vendor;
+using foodfinder::FoodFinderService;
+using foodfinder::SupplierService;
+using foodfinder::VendorService;
 using foodfinder::SupplyRequest;
-using foodfinder::SupplyInfo;
-using foodfinder::VendorInfo;
-using foodfinder::InventoryInfo;
+using foodfinder::SupplyResponse;
+using foodfinder::VendorResponse;
+using foodfinder::InventoryResponse;
+using foodfinder::Vendor;
+using foodfinder::Item;
 
+// TODO - move to seperate file
 class VendorClient {
   public:
     VendorClient(std::shared_ptr<Channel> channel)
-      : stub_(Vendor::NewStub(channel)) {}
+      : stub_(VendorService::NewStub(channel)) {}
 
-    InventoryInfo RequestInventoryInfo(const std::string& name) {
-      SupplyRequest request;
-      request.set_name(name);
-
+    InventoryResponse RequestInventoryList(const SupplyRequest& request) {
       ClientContext context;
-      InventoryInfo info;
-
-      Status status = stub_->RequestInventoryInfo(&context, request, &info);
+      InventoryResponse inventory;
+      Status status = stub_->RequestInventoryList(&context, request, &inventory);
 
       if (status.ok()) {
-        return info;
+        return inventory;
       } else {
         std::cout << status.error_code() << ": " << status.error_message() 
           << std::endl;
-        return info;
+        return inventory;
       }
     }
 
   private:
-    std::unique_ptr<Vendor::Stub> stub_;
+    std::unique_ptr<VendorService::Stub> stub_;
 };
 
-
+// TODO - move to seperate file
 class SupplierClient {
   public:
     SupplierClient(std::shared_ptr<Channel> channel)
-      : stub_(Supplier::NewStub(channel)) {}
+      : stub_(SupplierService::NewStub(channel)) {}
 
-    Status RequestSupplyInfo(const std::string& name, SupplyInfo& s_i) {
-      SupplyRequest request;
-      request.set_name(name);
-
-      VendorClient vendor(grpc::CreateChannel(
-        "localhost:50053", grpc::InsecureChannelCredentials()));
-
+    VendorResponse RequestVendorList(const SupplyRequest& request) {
       ClientContext context;
+      VendorResponse vendors;
+      Status status = stub_->RequestVendorList(&context, request, &vendors);
 
-      std::unique_ptr<ClientReader<VendorInfo>> reader (
-        stub_->RequestVendorInfo(&context, request));
-
-      VendorInfo current_vendor;
-
-      InventoryInfo candidate_i_info = MakeInventory(FLT_MAX, 0);
-      VendorInfo candidate_v_info = MakeVendor("", "");
-
-      while (reader->Read(&current_vendor)) {
-        InventoryInfo current_info = vendor.RequestInventoryInfo(name);
-        std::cout << current_vendor.name() << " - has " 
-          << current_info.quantity() << " in stock at a price of "
-          << current_info.price() << std::endl;
-        if (current_info.quantity() != 0 
-            && current_info.price() < candidate_i_info.price()) {
-          candidate_i_info = current_info;
-          candidate_v_info = current_vendor;
-        }
-      }
-
-      Status status = reader->Finish();
-
-      if (candidate_i_info.quantity() != 0) {
-        s_i = MakeSupply(candidate_v_info, candidate_i_info);
-        if (!status.ok()) {
-          std::cout << status.error_code() << ": " << status.error_message()
-            << std::endl;
-        }
-        return status;
+      if (status.ok()) {
+        return vendors;
       } else {
-        return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
+        std::cout << status.error_code() << ": " << status.error_message()
+          << std::endl;
+          return vendors;
       }
     }
 
   private:
-    std::unique_ptr<Supplier::Stub> stub_;
+    std::unique_ptr<SupplierService::Stub> stub_;
 };
 
-class FoodFinderImpl final : public FoodFinder::Service {
+class FoodFinderImpl final : public FoodFinderService::Service {
   Status RequestSupplyInfo(ServerContext* context, const SupplyRequest* request,
-     SupplyInfo* response) {
+     SupplyResponse* response) {
     
     SupplierClient supplier(grpc::CreateChannel(
       "localhost:50052", grpc::InsecureChannelCredentials()));
 
-    SupplyInfo s_i;
+    VendorResponse vendors = supplier.RequestVendorList(*request);
 
-    Status status = supplier.RequestSupplyInfo(request->name(), s_i);
+    Item candidate_item = MakeItem("", FLT_MAX, 0);
+    Vendor candidate_vendor = MakeVendor("", "");
 
-    VendorInfo* v_ptr = response->mutable_vendor();
-    *v_ptr = s_i.vendor();
+    for (size_t v_i = 0; v_i < vendors.vendors_size(); ++v_i) {
+      Vendor current_vendor = vendors.vendors(v_i);
+      VendorClient vendor(grpc::CreateChannel(
+        current_vendor.url(), grpc::InsecureChannelCredentials()));
+      InventoryResponse inventory = vendor.RequestInventoryList(*request);
+      for (size_t i_i = 0; i_i < inventory.inventory_size(); ++i_i) {
+        Item current_item = inventory.inventory(i_i);
+        std::cout << current_vendor.name() << " - has " 
+          << current_item.quantity() << " of " << request->name() <<
+          " in stock at a price of " << current_item.price() << std::endl;
+        if (current_item.name() == request->name()
+          && current_item.quantity() >= request->quantity() 
+          && current_item.price() < candidate_item.price()) {
+          candidate_item = current_item;
+          candidate_vendor = current_vendor;
+        }
+      }
+    }
 
-    InventoryInfo* i_ptr = response->mutable_inventory();
-    *i_ptr = s_i.inventory();
+    if (candidate_item.quantity() != 0) {
+      Vendor* v_ptr = response->mutable_vendor();
+      *v_ptr = candidate_vendor;
 
-    return status;
+      Item* i_ptr = response->mutable_inventory();
+      *i_ptr = candidate_item;
+
+      return Status::OK;
+    } else {
+      return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
+    }
   } 
 };
 

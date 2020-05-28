@@ -36,22 +36,31 @@ using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 using grpc::StatusCode;
-using foodfinder::Vendor;
+using foodfinder::VendorService;
 using foodfinder::SupplyRequest;
-using foodfinder::InventoryInfo;
+using foodfinder::Item;
+using foodfinder::InventoryResponse;
 
-class VendorImpl final : public Vendor::Service {
-  Status RequestInventoryInfo(ServerContext* context, 
-    const SupplyRequest* request, InventoryInfo* response) override {
+// TEMP: Temporary inventory index. This will evebtually be moved to a MySQL DB.
+vector<Item> inventory;
+
+class VendorImpl final : public VendorService::Service {
+  Status RequestInventoryList(ServerContext* context, 
+    const SupplyRequest* request, InventoryResponse* response) override {
       std::cout << "Request for Inventory for " << request->name() << std::endl;
-      InventoryInfo info = MakeInventory(1.73, 23);
-      *response = info;
+
+      for (const auto& i : inventory) {
+        Item* current_item = response->add_inventory();
+        current_item->set_name(i.name());
+        current_item->set_price(i.price());
+        current_item->set_quantity(i.quantity());
+      }
       return Status::OK;
   } 
 };
 
 void RunServer() {
-  std::string server_address("0.0.0.0:50053");
+  std::string server_address("0.0.0.0:50060");
   VendorImpl service;
 
   grpc::EnableDefaultHealthCheckService(true);
@@ -72,6 +81,12 @@ void RunServer() {
 }
 
 int main(int argc, char** argv) {
+  // TEMP: Populate temporary inventory. 
+  // This will evebtually be moved to a MySQL DB.
+  inventory.push_back(MakeItem("milk", 1.73, 23));
+  inventory.push_back(MakeItem("bread", 3.84, 13));
+  inventory.push_back(MakeItem("eggs", 0.83, 3));
+
   RunServer();
 
   return 0;

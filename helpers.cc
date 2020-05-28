@@ -8,31 +8,32 @@
 
 #include "foodfinder.grpc.pb.h"
 
-using foodfinder::VendorInfo;
-using foodfinder::InventoryInfo;
-using foodfinder::SupplyInfo;
+using foodfinder::Vendor;
+using foodfinder::Item;
+using foodfinder::SupplyResponse;
 
-InventoryInfo MakeInventory(float price, int quantity) {
-  InventoryInfo i;
+Item MakeItem(std::string name, float price, int quantity) {
+  Item i;
+  i.set_name(name);
   i.set_price(price);
   i.set_quantity(quantity);
   return i;
 };
 
-VendorInfo MakeVendor(std::string name, std::string url) {
-  VendorInfo v;
+Vendor MakeVendor(std::string name, std::string url) {
+  Vendor v;
   v.set_name(name);
   v.set_url(url);
   return v;
 };
 
-SupplyInfo MakeSupply(VendorInfo v_info, InventoryInfo i_info) {
-	SupplyInfo s;
+SupplyResponse MakeSupply(Vendor v_info, Item i_info) {
+	SupplyResponse s;
 
-	VendorInfo* v_ptr = s.mutable_vendor();
+	Vendor* v_ptr = s.mutable_vendor();
 	*v_ptr = v_info;
 
-	InventoryInfo* i_ptr = s.mutable_inventory();
+	Item* i_ptr = s.mutable_inventory();
 	*i_ptr = i_info;
 
 	return s;
