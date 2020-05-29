@@ -65,7 +65,7 @@ class SupplierImpl final : public SupplierService::Service {
   }
 
   Status RegisterVendor(ServerContext* context, const Vendor* request,
-    Empty* response) {
+    Empty* response) override {
       vendors.push_back(*request);
       std::cout << "Successfully registered " << request->name()
         << " as a new vendor at " << request->url() << std::endl;

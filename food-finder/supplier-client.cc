@@ -35,7 +35,7 @@ class SupplierClient {
       }
     }
 
-    int RegisterVendor(const Vendor& request) {
+    Empty RegisterVendor(const Vendor& request) {
       ClientContext context;
       Empty e;
       Status status = stub_->RegisterVendor(&context, request, &e);
@@ -44,7 +44,7 @@ class SupplierClient {
         std::cout << status.error_code() << ": " << status.error_message()
           << std::endl;
       }
-      return 0;
+      return e;
     }
 
   private:

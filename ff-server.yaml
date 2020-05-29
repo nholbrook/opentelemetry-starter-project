@@ -74,8 +74,6 @@ spec:
           env:
             - name: VENDOR_NAME
               value: Aldi
-            - name: VENDOR_PORT
-              value: 0.0.0.0:50060
             - name: VENDOR_ADDRESS
               value: 34.75.101.194:50060
             - name: SUPPLIER_ADDRESS
