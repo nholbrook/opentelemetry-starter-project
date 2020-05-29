@@ -73,13 +73,15 @@ spec:
             - containerPort: 50060
           env:
             - name: VENDOR_NAME
-              value: Aldi
+              value: Meijer
             - name: VENDOR_ADDRESS
               value: 34.75.101.194:50060
+            - name: VENDOR_PORT
+              value: 0.0.0.0:50060
             - name: SUPPLIER_ADDRESS
               value: 104.196.112.54:50052
 ---
-# Vendor 1 Service (Aldi)
+# Vendor 1 Service (Meijer)
 apiVersion: v1
 kind: Service
 metadata:
