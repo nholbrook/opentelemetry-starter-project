@@ -91,7 +91,7 @@ class FoodFinderImpl final : public FoodFinderService::Service {
     } else {
       return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
     }
-  } 
+  }
 };
 
 void RunServer() {

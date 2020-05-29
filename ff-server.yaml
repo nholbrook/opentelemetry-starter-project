@@ -1,0 +1,124 @@
+# Food Finder App
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ff-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ff-app
+  template:
+    metadata:
+      labels:
+        app: ff-app
+    spec:
+      containers:
+        - name: ff-finder-service
+          image: gcr.io/cal-intern-project/nholbrook-ff-finder-service:latest
+          ports:
+            - containerPort: 50051
+              protocol: TCP
+        - name: ff-supplier-service
+          image: gcr.io/cal-intern-project/nholbrook-ff-supplier-service:latest
+          ports:
+            - containerPort: 50052
+              protocol: TCP
+        # - name: endpoint-service
+        #   image: gcr.io/endpoints-release/endpoints-runtime:1
+        #   args:
+        #     - --http2_port=9000
+        #     - --backend=grpc://127.0.0.1:50051
+        #     - --service=helloworld.endpoints.cal-intern-project.cloud.goog
+        #   ports:
+        #     - containerPort: 9000
+        #       protocol: TCP
+---
+# Food Finder Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ff-finder-service
+spec:
+  ports:
+  - protocol: TCP
+    port: 50051
+    name: ff-port
+  - protocol: TCP
+    port: 50052
+    name: supplier-port
+  selector:
+    app: ff-app
+  type: LoadBalancer
+---
+# Vendor 1 App (Aldi)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ff-vendor1-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ff-vendor1-app
+  template:
+    metadata:
+      labels:
+        app: ff-vendor1-app
+    spec:
+      containers:
+        - name: ff-vendor1-service
+          image: gcr.io/cal-intern-project/nholbrook-ff-vendor-service:latest
+          ports:
+            - containerPort: 50060
+          env:
+            - name: VENDOR_NAME
+              value: Aldi
+            - name: VENDOR_PORT
+              value: 0.0.0.0:50060
+            - name: VENDOR_ADDRESS
+              value: 34.75.101.194:50060
+            - name: SUPPLIER_ADDRESS
+              value: 104.196.112.54:50052
+---
+# Vendor 1 Service (Aldi)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ff-vendor1-service
+spec:
+  ports:
+  - protocol: TCP
+    port: 50060
+  selector:
+    app: ff-vendor1-app
+  type: LoadBalancer
+# ---
+# # Vendor 2 Service
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ff-vendor2-service
+# spec:
+#   ports:
+#   - protocol: TCP
+#     port: 50061
+#     targetPort: 9000
+#   selector:
+#     app: greeter-server-app
+#   type: LoadBalancer
+# ---
+# # Vendor 3 Service
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ff-vendor3-service
+# spec:
+#   ports:
+#   - protocol: TCP
+#     port: 50062
+#     targetPort: 9000
+#   selector:
+#     app: greeter-server-app
+#   type: LoadBalancer
+# ---

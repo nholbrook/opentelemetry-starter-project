@@ -13,6 +13,8 @@ using grpc::Status;
 using foodfinder::SupplierService;
 using foodfinder::SupplyRequest;
 using foodfinder::VendorResponse;
+using foodfinder::Vendor;
+using foodfinder::Empty;
 
 class SupplierClient {
   public:
@@ -31,6 +33,18 @@ class SupplierClient {
           << std::endl;
           return vendors;
       }
+    }
+
+    int RegisterVendor(const Vendor& request) {
+      ClientContext context;
+      Empty e;
+      Status status = stub_->RegisterVendor(&context, request, &e);
+
+      if (!status.ok()) {
+        std::cout << status.error_code() << ": " << status.error_message()
+          << std::endl;
+      }
+      return 0;
     }
 
   private:
