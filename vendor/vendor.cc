@@ -17,6 +17,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <string>
 
@@ -96,11 +97,23 @@ int main(int argc, char** argv) {
 
   Vendor v = MakeVendor(vendor_name, vendor_address);
 
-  // TEMP: Populate temporary inventory. 
-  // This will evebtually be moved to a MySQL DB.
-  inventory.push_back(MakeItem("milk", 1.73, 23));
-  inventory.push_back(MakeItem("bread", 3.84, 13));
-  inventory.push_back(MakeItem("eggs", 0.83, 3));
+  std::ifstream inventoryFile ("../volumes/inventory.txt");
+  std::string name, price, quantity;
+
+  inventoryFile >> name;
+
+  while (inventoryFile >> name) {
+    inventoryFile >> price;
+    inventoryFile >> quantity;
+    inventory.push_back(MakeItem(name, std::stof(price), std::stoi(quantity)));
+  }
+  inventoryFile.close();
+
+  if (inventory.empty()) {
+    std::cout << "CUR NAME: " << name << std::endl;
+    std::cout << "ERROR: unable to read inventory" << std::endl;
+    // return 0;
+  }
 
   RunServer(v, vendor_port, supplier_address);
 
