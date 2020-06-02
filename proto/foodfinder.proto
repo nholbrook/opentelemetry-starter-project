@@ -1,0 +1,80 @@
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.github.nholbrook.foodfinder";
+option java_outer_classname = "FoodFinderProto";
+option objc_class_prefix = "FF";
+
+package foodfinder;
+
+// The Food Finder service definition. This is the primary interface that the
+// client calls.
+service FoodFinderService {
+  rpc RequestSupplyInfo (SupplyRequest) returns (SupplyResponse) {}
+}
+
+// The Supplier service definition. This service contains an index of vendors
+// and will only be called by the Food Finder service.
+service SupplierService {
+  rpc RequestVendorList (SupplyRequest) returns (VendorResponse) {}
+}
+
+// The Vendor service definition. This service will be ran multiple times to
+// simulate multiple vendors. It will contain a vendors current inventory and
+// will only be called by the Food Finder service. 
+service VendorService {
+  rpc RequestInventoryList (SupplyRequest) returns (InventoryResponse) {}  
+}
+
+// The request message from a end user containing the name of a food items and
+// the desired quantity
+message SupplyRequest {
+  string name = 1;
+  uint32 quantity = 2;
+}
+
+// The response message from the Food Finder service containing a vendor and its
+// inventory information
+message SupplyResponse {
+  Item inventory = 1;
+  Vendor vendor = 2;
+}
+
+// The response message from the Supplier service containing all relevent
+// vendors
+message VendorResponse {
+  repeated Vendor vendors = 1;
+}
+
+// The response message from the Supplier service containing all relevent
+// inventory info
+message InventoryResponse {
+  repeated Item inventory = 1;
+}
+
+// A message containing the name of a vendor and its URL
+message Vendor {
+  string url = 1;
+  string name = 2;
+}
+
+// A message from containing the name of an item, its price and its quantity
+message Item {
+  string name = 1;
+  float price = 2;
+  uint32 quantity = 3;
+}
