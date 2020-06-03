@@ -7,12 +7,14 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
+using google::protobuf::Empty;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 using foodfinder::SupplierService;
 using foodfinder::SupplyRequest;
 using foodfinder::VendorResponse;
+using foodfinder::Vendor;
 
 class SupplierClient {
   public:
@@ -31,6 +33,18 @@ class SupplierClient {
           << std::endl;
           return vendors;
       }
+    }
+
+    Empty RegisterVendor(const Vendor& request) {
+      ClientContext context;
+      Empty e;
+      Status status = stub_->RegisterVendor(&context, request, &e);
+
+      if (!status.ok()) {
+        std::cout << status.error_code() << ": " << status.error_message()
+          << std::endl;
+      }
+      return e;
     }
 
   private:

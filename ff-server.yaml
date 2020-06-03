@@ -1,0 +1,242 @@
+# Food Finder App
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ff-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ff-app
+  template:
+    metadata:
+      labels:
+        app: ff-app
+    spec:
+      containers:
+        - name: ff-finder-service
+          image: gcr.io/cal-intern-project/nholbrook-ff-finder-service:latest
+          ports:
+            - containerPort: 50051
+              protocol: TCP
+        - name: ff-supplier-service
+          image: gcr.io/cal-intern-project/nholbrook-ff-supplier-service:latest
+          ports:
+            - containerPort: 50052
+              protocol: TCP
+        # - name: endpoint-service
+        #   image: gcr.io/endpoints-release/endpoints-runtime:1
+        #   args:
+        #     - --http2_port=9000
+        #     - --backend=grpc://127.0.0.1:50051
+        #     - --service=helloworld.endpoints.cal-intern-project.cloud.goog
+        #   ports:
+        #     - containerPort: 9000
+        #       protocol: TCP
+---
+# Food Finder Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ff-finder-service
+spec:
+  ports:
+  - protocol: TCP
+    port: 50051
+    name: ff-port
+  - protocol: TCP
+    port: 50052
+    name: supplier-port
+  selector:
+    app: ff-app
+  type: LoadBalancer
+---
+# Vendor 1 Config Map (Meijer)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vendor1-configmap
+data:
+  inventory.txt: \
+    milk 2.19 5
+    eggs 2.38 8
+    bread 1.99 10
+    pepper 1.50 18
+    butter 3.29 4
+---
+# Vendor 1 App (Aldi)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ff-vendor1-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ff-vendor1-app
+  template:
+    metadata:
+      labels:
+        app: ff-vendor1-app
+    spec:
+      containers:
+        - name: ff-vendor1-service
+          image: gcr.io/cal-intern-project/nholbrook-ff-vendor-service:latest
+          ports:
+            - containerPort: 50060
+          env:
+            - name: VENDOR_NAME
+              value: Meijer
+            - name: VENDOR_ADDRESS
+              value: ${kubectl get svc ff-vendor1-service -o jsonpath='{..ip}'}:50060
+            - name: VENDOR_PORT
+              value: 0.0.0.0:50060
+            - name: SUPPLIER_ADDRESS
+              value: ${kubectl get svc ff-finder-service -o jsonpath='{..ip}'}:${kubectl get svc ff-finder-service -o jsonpath='{..port}'}
+          volumeMounts:
+            - name: vendor1-configmap
+              mountPath: /volumes
+      volumes:
+        - name: vendor1-configmap
+          configMap:
+            name: vendor1-configmap
+---
+# Vendor 1 Service (Meijer)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ff-vendor1-service
+spec:
+  ports:
+  - protocol: TCP
+    port: 50060
+  selector:
+    app: ff-vendor1-app
+  type: LoadBalancer
+---
+# Vendor 2 Config Map (Adli)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vendor2-configmap
+data:
+  inventory.txt: \
+    milk 1.78 5
+    eggs 2.52 8
+    bread 1.83 10
+    pepper 1.50 18
+    butter 3.29 4
+---
+# Vendor 2 App (Aldi)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ff-vendor2-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ff-vendor2-app
+  template:
+    metadata:
+      labels:
+        app: ff-vendor2-app
+    spec:
+      containers:
+        - name: ff-vendor2-service
+          image: gcr.io/cal-intern-project/nholbrook-ff-vendor-service:latest
+          ports:
+            - containerPort: 50060
+          env:
+            - name: VENDOR_NAME
+              value: Aldi
+            - name: VENDOR_ADDRESS
+              value: ${kubectl get svc ff-vendor2-service -o jsonpath='{..ip}'}:50060
+            - name: VENDOR_PORT
+              value: 0.0.0.0:50060
+            - name: SUPPLIER_ADDRESS
+              value: ${kubectl get svc ff-finder-service -o jsonpath='{..ip}'}:${kubectl get svc ff-finder-service -o jsonpath='{..port}'}
+          volumeMounts:
+            - name: vendor2-configmap
+              mountPath: /volumes
+      volumes:
+        - name: vendor2-configmap
+          configMap:
+            name: vendor2-configmap
+---
+# Vendor 2 Service (Aldi)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ff-vendor2-service
+spec:
+  ports:
+  - protocol: TCP
+    port: 50060
+  selector:
+    app: ff-vendor2-app
+  type: LoadBalancer
+---
+# Vendor 3 Config Map (Kroger)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vendor3-configmap
+data:
+  inventory.txt: \
+    milk 2.32 5
+    eggs 2.48 8
+    bread 2.56 10
+    pepper 0.89 18
+    butter 4.42 4
+---
+# Vendor 3 App (Kroger)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ff-vendor3-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ff-vendor3-app
+  template:
+    metadata:
+      labels:
+        app: ff-vendor3-app
+    spec:
+      containers:
+        - name: ff-vendor3-service
+          image: gcr.io/cal-intern-project/nholbrook-ff-vendor-service:latest
+          ports:
+            - containerPort: 50060
+          env:
+            - name: VENDOR_NAME
+              value: Kroger
+            - name: VENDOR_ADDRESS
+              value: ${kubectl get svc ff-vendor3-service -o jsonpath='{..ip}'}:50060
+            - name: VENDOR_PORT
+              value: 0.0.0.0:50060
+            - name: SUPPLIER_ADDRESS
+              value: ${kubectl get svc ff-finder-service -o jsonpath='{..ip}'}:${kubectl get svc ff-finder-service -o jsonpath='{..port}'}
+          volumeMounts:
+            - name: vendor3-configmap
+              mountPath: /volumes
+      volumes:
+        - name: vendor3-configmap
+          configMap:
+            name: vendor3-configmap
+---
+# Vendor 3 Service (Kroger)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ff-vendor3-service
+spec:
+  ports:
+  - protocol: TCP
+    port: 50060
+  selector:
+    app: ff-vendor3-app
+  type: LoadBalancer
+---

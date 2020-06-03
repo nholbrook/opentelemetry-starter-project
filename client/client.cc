@@ -63,8 +63,8 @@ class FoodFinderClient {
 };
 
 int main(int argc, char** argv) {
-  std::string food_str = "milk";
-  std::string target_str = "localhost:50051";
+  std::string food_str = argv[1];
+  std::string target_str = argv[2];
 
   FoodFinderClient client(grpc::CreateChannel(
 			  target_str, grpc::InsecureChannelCredentials()));

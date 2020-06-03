@@ -27,6 +27,7 @@
 #include "foodfinder.grpc.pb.h"
 #include "helpers.cc"
 
+using google::protobuf::Empty;
 using std::string;
 using std::vector;
 using grpc::Channel;
@@ -42,7 +43,6 @@ using foodfinder::SupplyRequest;
 using foodfinder::Vendor;
 using foodfinder::VendorResponse;
 
-// TEMP: Temporary list of vendors. This will evebtually be moved to a MySQL DB.
 vector<Vendor> vendors;
 
 class SupplierImpl final : public SupplierService::Service {
@@ -61,6 +61,14 @@ class SupplierImpl final : public SupplierService::Service {
       }
       return Status::OK;
     }
+  }
+
+  Status RegisterVendor(ServerContext* context, const Vendor* request,
+    Empty* response) override {
+      vendors.push_back(*request);
+      std::cout << "Successfully registered " << request->name()
+        << " as a new vendor at " << request->url() << std::endl;
+      return Status::OK;
   }
 };
 
@@ -86,15 +94,6 @@ void RunServer() {
 }
 
 int main(int argc, char** argv) {
-  // TEMP: Populate temporary list of vendors. 
-  // This will evebtually be moved to a MySQL DB.
-  vendors.push_back(MakeVendor("Aldi", "localhost:50060"));
-  // vendors.push_back(MakeVendor("Trader Joe's", "localhost:50061"));
-  // vendors.push_back(MakeVendor("Whole Foods", "localhost:50062"));
-  // vendors.push_back(MakeVendor("Publix", "localhost:50063"));
-  // vendors.push_back(MakeVendor("Kroger", "localhost:50064"));
-  // vendors.push_back(MakeVendor("Meijer", "localhost:50065"));
-
   RunServer();
 
   return 0;
