@@ -88,11 +88,11 @@ spec:
             - name: VENDOR_NAME
               value: Meijer
             - name: VENDOR_ADDRESS
-              value: 34.75.101.194:50060
+              value: ${kubectl get svc ff-vendor1-service -o jsonpath='{..ip}'}:50060
             - name: VENDOR_PORT
               value: 0.0.0.0:50060
             - name: SUPPLIER_ADDRESS
-              value: 104.196.112.54:50052
+              value: ${kubectl get svc ff-finder-service -o jsonpath='{..ip}'}:${kubectl get svc ff-finder-service -o jsonpath='{..port}'}
           volumeMounts:
             - name: vendor1-configmap
               mountPath: /volumes
@@ -151,11 +151,11 @@ spec:
             - name: VENDOR_NAME
               value: Aldi
             - name: VENDOR_ADDRESS
-              value: 35.229.51.126:50060
+              value: ${kubectl get svc ff-vendor2-service -o jsonpath='{..ip}'}:50060
             - name: VENDOR_PORT
               value: 0.0.0.0:50060
             - name: SUPPLIER_ADDRESS
-              value: 104.196.112.54:50052
+              value: ${kubectl get svc ff-finder-service -o jsonpath='{..ip}'}:${kubectl get svc ff-finder-service -o jsonpath='{..port}'}
           volumeMounts:
             - name: vendor2-configmap
               mountPath: /volumes
@@ -214,11 +214,11 @@ spec:
             - name: VENDOR_NAME
               value: Kroger
             - name: VENDOR_ADDRESS
-              value: 35.231.11.89:50060
+              value: ${kubectl get svc ff-vendor3-service -o jsonpath='{..ip}'}:50060
             - name: VENDOR_PORT
               value: 0.0.0.0:50060
             - name: SUPPLIER_ADDRESS
-              value: 104.196.112.54:50052
+              value: ${kubectl get svc ff-finder-service -o jsonpath='{..ip}'}:${kubectl get svc ff-finder-service -o jsonpath='{..port}'}
           volumeMounts:
             - name: vendor3-configmap
               mountPath: /volumes
