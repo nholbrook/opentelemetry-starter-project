@@ -29,6 +29,7 @@
 #include "supplier-client.cc"
 #include "helpers.cc"
 
+using google::protobuf::Empty;
 using std::string;
 using std::vector;
 using grpc::Channel;
@@ -42,9 +43,7 @@ using foodfinder::VendorService;
 using foodfinder::SupplyRequest;
 using foodfinder::Item;
 using foodfinder::InventoryResponse;
-using foodfinder::Empty;
 
-// TEMP: Temporary inventory index. This will evebtually be moved to a MySQL DB.
 vector<Item> inventory;
 
 class VendorImpl final : public VendorService::Service {

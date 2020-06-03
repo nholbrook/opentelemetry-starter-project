@@ -14,12 +14,14 @@
 
 syntax = "proto3";
 
+package foodfinder;
+
 option java_multiple_files = true;
 option java_package = "com.github.nholbrook.foodfinder";
 option java_outer_classname = "FoodFinderProto";
 option objc_class_prefix = "FF";
 
-package foodfinder;
+import "google/protobuf/empty.proto";
 
 // The Food Finder service definition. This is the primary interface that the
 // client calls.
@@ -31,7 +33,7 @@ service FoodFinderService {
 // and will only be called by the Food Finder service.
 service SupplierService {
   rpc RequestVendorList (SupplyRequest) returns (VendorResponse) {}
-  rpc RegisterVendor (Vendor) returns (Empty) {}
+  rpc RegisterVendor (Vendor) returns (google.protobuf.Empty) {}
 }
 
 // The Vendor service definition. This service will be ran multiple times to
@@ -79,6 +81,3 @@ message Item {
   float price = 2;
   uint32 quantity = 3;
 }
-
-// Empty message for one way grpc calls 
-message Empty {}

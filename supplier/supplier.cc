@@ -27,6 +27,7 @@
 #include "foodfinder.grpc.pb.h"
 #include "helpers.cc"
 
+using google::protobuf::Empty;
 using std::string;
 using std::vector;
 using grpc::Channel;
@@ -41,9 +42,7 @@ using foodfinder::SupplierService;
 using foodfinder::SupplyRequest;
 using foodfinder::Vendor;
 using foodfinder::VendorResponse;
-using foodfinder::Empty;
 
-// TEMP: Temporary list of vendors. This will evebtually be moved to a MySQL DB.
 vector<Vendor> vendors;
 
 class SupplierImpl final : public SupplierService::Service {

@@ -7,6 +7,7 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
+using google::protobuf::Empty;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
@@ -14,7 +15,6 @@ using foodfinder::SupplierService;
 using foodfinder::SupplyRequest;
 using foodfinder::VendorResponse;
 using foodfinder::Vendor;
-using foodfinder::Empty;
 
 class SupplierClient {
   public:
