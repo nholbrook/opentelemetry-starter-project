@@ -2,10 +2,7 @@
 
 # Build
 *Run all build commands from the root dir.*
-- **Client:** docker build -t food-finder-client -f client/Dockerfile .
-- **Food Finder:** docker build -t food-finder-server -f server/Dockerfile .
-- **Supplier:** docker build -t supplier-server -f supplier/Dockerfile .
-- **Vendor:** docker build -t vendor-server -f vendor/Dockerfile .
+- **All:** `bazel build :all`
 
 # Run
 *Run all build commands from the root dir.*
