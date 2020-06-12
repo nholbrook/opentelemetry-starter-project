@@ -31,8 +31,8 @@
 #endif
 
 #include "helpers.h"
-#include "supplier-client.h"
-#include "vendor-client.h"
+#include "food-finder/supplier-client.h"
+#include "food-finder/vendor-client.h"
 
 using std::string;
 using grpc::Channel;

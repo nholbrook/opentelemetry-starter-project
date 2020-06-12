@@ -3,6 +3,8 @@
 #include <string>
 #include <cfloat>
 
+#include "vendor-client.h"
+
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
@@ -20,25 +22,19 @@ using foodfinder::VendorService;
 using foodfinder::SupplyRequest;
 using foodfinder::InventoryResponse;
 
-class VendorClient {
-  public:
-    VendorClient(std::shared_ptr<Channel> channel)
+VendorClient::VendorClient(std::shared_ptr<Channel> channel)
       : stub_(VendorService::NewStub(channel)) {}
 
-    InventoryResponse RequestInventoryList(const SupplyRequest& request) {
-      ClientContext context;
-      InventoryResponse inventory;
-      Status status = stub_->RequestInventoryList(&context, request, &inventory);
+InventoryResponse VendorClient::RequestInventoryList(const SupplyRequest& request) {
+  ClientContext context;
+  InventoryResponse inventory;
+  Status status = stub_->RequestInventoryList(&context, request, &inventory);
 
-      if (status.ok()) {
-        return inventory;
-      } else {
-        std::cout << status.error_code() << ": " << status.error_message() 
-          << std::endl;
-        return inventory;
-      }
-    }
-
-  private:
-    std::unique_ptr<VendorService::Stub> stub_;
-};
+  if (status.ok()) {
+    return inventory;
+  } else {
+    std::cout << status.error_code() << ": " << status.error_message() 
+      << std::endl;
+    return inventory;
+  }
+}

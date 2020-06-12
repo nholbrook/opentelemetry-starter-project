@@ -58,7 +58,7 @@ cc_library(
     name = "supplier_client",
     defines = ["BAZEL_BUILD"],
     srcs = ["food-finder/supplier-client.cc"],
-    hdrs = ["supplier-client.h"],
+    hdrs = ["food-finder/supplier-client.h"],
     deps = [
         ":helpers",
         ":exporters",
@@ -83,7 +83,7 @@ cc_library(
     name = "vendor_client",
     defines = ["BAZEL_BUILD"],
     srcs = ["food-finder/vendor-client.cc"],
-    hdrs = ["vendor-client.h"],
+    hdrs = ["food-finder/vendor-client.h"],
     deps = [
         ":exporters",
         ":ff_cc_grpc",

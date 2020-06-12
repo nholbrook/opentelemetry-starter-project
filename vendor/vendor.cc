@@ -30,7 +30,7 @@
 #include "foodfinder.grpc.pb.h"
 #endif
 
-#include "supplier-client.h"
+#include "food-finder/supplier-client.h"
 #include "helpers.h"
 
 using google::protobuf::Empty;
