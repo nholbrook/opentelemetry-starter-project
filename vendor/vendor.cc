@@ -25,9 +25,14 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
+#ifdef BAZEL_BUILD
+#include "proto/foodfinder.grpc.pb.h"
+#else
 #include "foodfinder.grpc.pb.h"
-#include "supplier-client.cc"
-#include "helpers.cc"
+#endif
+
+#include "supplier-client.h"
+#include "helpers.h"
 
 using google::protobuf::Empty;
 using std::string;
@@ -41,6 +46,7 @@ using grpc::Status;
 using grpc::StatusCode;
 using foodfinder::VendorService;
 using foodfinder::SupplyRequest;
+using foodfinder::Vendor;
 using foodfinder::Item;
 using foodfinder::InventoryResponse;
 

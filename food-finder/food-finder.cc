@@ -25,10 +25,15 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
+#ifdef BAZEL_BUILD
+#include "proto/foodfinder.grpc.pb.h"
+#else
 #include "foodfinder.grpc.pb.h"
-#include "helpers.cc"
-#include "supplier-client.cc"
-#include "vendor-client.cc"
+#endif
+
+#include "helpers.h"
+#include "supplier-client.h"
+#include "vendor-client.h"
 
 using std::string;
 using grpc::Channel;
@@ -61,12 +66,12 @@ class FoodFinderImpl final : public FoodFinderService::Service {
     Item candidate_item = MakeItem("", FLT_MAX, 0);
     Vendor candidate_vendor = MakeVendor("", "");
 
-    for (size_t v_i = 0; v_i < vendors.vendors_size(); ++v_i) {
+    for (size_t v_i = 0; v_i < (size_t)vendors.vendors_size(); ++v_i) {
       Vendor current_vendor = vendors.vendors(v_i);
       VendorClient vendor(grpc::CreateChannel(
         current_vendor.url(), grpc::InsecureChannelCredentials()));
       InventoryResponse inventory = vendor.RequestInventoryList(*request);
-      for (size_t i_i = 0; i_i < inventory.inventory_size(); ++i_i) {
+      for (size_t i_i = 0; i_i < (size_t)inventory.inventory_size(); ++i_i) {
         Item current_item = inventory.inventory(i_i);
         std::cout << current_vendor.name() << " - has " 
           << current_item.quantity() << " of " << current_item.name() <<
