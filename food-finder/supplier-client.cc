@@ -8,6 +8,8 @@
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
+#include "opencensus/trace/span.h"
+
 #ifdef BAZEL_BUILD
 #include "proto/foodfinder.grpc.pb.h"
 #else
@@ -27,16 +29,21 @@ using foodfinder::Vendor;
 SupplierClient::SupplierClient(std::shared_ptr<Channel> channel)
   : stub_(SupplierService::NewStub(channel)) {}
 
-VendorResponse SupplierClient::RequestVendorList(const SupplyRequest& request) {
+VendorResponse SupplierClient::RequestVendorList(const SupplyRequest& request,
+  const opencensus::trace::Span& parentSpan) {
+  auto span = opencensus::trace::Span::StartSpan(
+    "Fulfilling Vendor List Request", &parentSpan);
   ClientContext context;
   VendorResponse vendors;
   Status status = stub_->RequestVendorList(&context, request, &vendors);
 
   if (status.ok()) {
+    span.End();
     return vendors;
   } else {
     std::cout << status.error_code() << ": " << status.error_message()
       << std::endl;
+      span.End();
       return vendors;
   }
 }

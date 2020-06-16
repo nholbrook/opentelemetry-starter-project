@@ -31,8 +31,12 @@
 #endif
 
 #include "helpers.h"
+#include "exporters.h"
 #include "food-finder/supplier-client.h"
 #include "food-finder/vendor-client.h"
+
+#include "opencensus/trace/sampler.h"
+#include "opencensus/trace/span.h"
 
 using std::string;
 using grpc::Channel;
@@ -54,13 +58,27 @@ using foodfinder::Vendor;
 using foodfinder::Item;
 
 class FoodFinderImpl final : public FoodFinderService::Service {
+
   Status RequestSupplyInfo(ServerContext* context, const SupplyRequest* request,
      SupplyResponse* response) {
+
+    std::cout << "pre sampler" << std::endl;
+
+    static opencensus::trace::AlwaysSampler sampler;
+
+    std::cout << "post sampler" << std::endl;
+
+    // Start Span
+    auto span = opencensus::trace::Span::StartSpan("RequestSupplyInfo", nullptr,
+      {&sampler});
     
     SupplierClient supplier(grpc::CreateChannel(
       "localhost:50052", grpc::InsecureChannelCredentials()));
 
-    VendorResponse vendors = supplier.RequestVendorList(*request);
+    // Start Span
+    span.AddAnnotation("Requesting Vendor List");
+    VendorResponse vendors = supplier.RequestVendorList(*request, span);
+    // End Span
 
     Item candidate_item = MakeItem("", FLT_MAX, 0);
     Vendor candidate_vendor = MakeVendor("", "");
@@ -69,7 +87,12 @@ class FoodFinderImpl final : public FoodFinderService::Service {
       Vendor current_vendor = vendors.vendors(v_i);
       VendorClient vendor(grpc::CreateChannel(
         current_vendor.url(), grpc::InsecureChannelCredentials()));
-      InventoryResponse inventory = vendor.RequestInventoryList(*request);
+      // Start Span
+      span.AddAnnotation("Requesting Inventory List From: "
+        + current_vendor.name());
+      InventoryResponse inventory = vendor.RequestInventoryList(
+        *request, span);
+      // End Span
       for (size_t i_i = 0; i_i < (size_t)inventory.inventory_size(); ++i_i) {
         Item current_item = inventory.inventory(i_i);
         std::cout << current_vendor.name() << " - has " 
@@ -91,8 +114,11 @@ class FoodFinderImpl final : public FoodFinderService::Service {
       Item* i_ptr = response->mutable_inventory();
       *i_ptr = candidate_item;
 
+      // End Span
+      span.End();
       return Status::OK;
     } else {
+      span.End();
       return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
     }
   }
@@ -121,6 +147,11 @@ void RunServer() {
 }
 
 int main(int argc, char** argv) {
+  RegisterExporters();
+
+  opencensus::trace::TraceConfig::SetCurrentTraceParams(
+      {128, 128, 128, 128, opencensus::trace::ProbabilitySampler(1.0)});
+
   RunServer();
 
   return 0;

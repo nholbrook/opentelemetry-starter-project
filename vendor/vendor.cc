@@ -116,6 +116,7 @@ int main(int argc, char** argv) {
   if (inventory.empty()) {
     std::cout << "CUR NAME: " << name << std::endl;
     std::cout << "ERROR: unable to read inventory" << std::endl;
+    inventory.push_back(MakeItem("milk", 1.42, 3));
     // return 0;
   }
 
