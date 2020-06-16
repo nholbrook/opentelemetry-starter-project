@@ -6,7 +6,7 @@
 
 # Run
 *Run all build commands from the root dir.*
-- **Client:** docker run --rm --name food-finder-client --network="host" food-finder-client
-- **Food Finder:** docker run --rm --network="host" --name food-finder-server food-finder-server
-- **Supplier:** docker run --rm --network="host" --name supplier-server supplier-server
-- **Vendor:** docker run --rm --network="host" --name vendor-server vendor-server
+- **Client:** ./bazel-bin/food_finder_client milk localhost:50051
+- **Food Finder:** ./bazel-bin/food_finder_server
+- **Supplier:** ./bazel-bin/supplier_server
+- **Vendor:** ./bazel-bin/vendor_server Meijer localhost:50061 0.0.0.0:50061 localhost:50052
