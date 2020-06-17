@@ -22,12 +22,16 @@
 #include <string>
 
 #include <grpcpp/grpcpp.h>
-#include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
+#ifdef BAZEL_BUILD
+#include "proto/foodfinder.grpc.pb.h"
+#else
 #include "foodfinder.grpc.pb.h"
-#include "supplier-client.cc"
-#include "helpers.cc"
+#endif
+
+#include "food-finder/supplier-client.h"
+#include "helpers.h"
 
 using google::protobuf::Empty;
 using std::string;
@@ -41,6 +45,7 @@ using grpc::Status;
 using grpc::StatusCode;
 using foodfinder::VendorService;
 using foodfinder::SupplyRequest;
+using foodfinder::Vendor;
 using foodfinder::Item;
 using foodfinder::InventoryResponse;
 
@@ -111,6 +116,7 @@ int main(int argc, char** argv) {
   if (inventory.empty()) {
     std::cout << "CUR NAME: " << name << std::endl;
     std::cout << "ERROR: unable to read inventory" << std::endl;
+    inventory.push_back(MakeItem("milk", 1.42, 3));
     // return 0;
   }
 

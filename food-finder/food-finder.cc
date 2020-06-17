@@ -22,13 +22,21 @@
 #include <cfloat>
 
 #include <grpcpp/grpcpp.h>
-#include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 
+#ifdef BAZEL_BUILD
+#include "proto/foodfinder.grpc.pb.h"
+#else
 #include "foodfinder.grpc.pb.h"
-#include "helpers.cc"
-#include "supplier-client.cc"
-#include "vendor-client.cc"
+#endif
+
+#include "helpers.h"
+#include "exporters.h"
+#include "food-finder/supplier-client.h"
+#include "food-finder/vendor-client.h"
+
+#include "opencensus/trace/sampler.h"
+#include "opencensus/trace/span.h"
 
 using std::string;
 using grpc::Channel;
@@ -50,23 +58,38 @@ using foodfinder::Vendor;
 using foodfinder::Item;
 
 class FoodFinderImpl final : public FoodFinderService::Service {
-  Status RequestSupplyInfo(ServerContext* context, const SupplyRequest* request,
+
+  Status RequestSupplyInfo(const SupplyRequest* request, ServerContext* context,
      SupplyResponse* response) {
+
+    static opencensus::trace::AlwaysSampler sampler;
+
+    // Start Span
+    auto span = opencensus::trace::Span::StartSpan("RequestSupplyInfo", nullptr,
+      {&sampler});
     
     SupplierClient supplier(grpc::CreateChannel(
       "localhost:50052", grpc::InsecureChannelCredentials()));
 
-    VendorResponse vendors = supplier.RequestVendorList(*request);
+    // Start Span
+    span.AddAnnotation("Requesting Vendor List");
+    VendorResponse vendors = supplier.RequestVendorList(*request, span);
+    // End Span
 
     Item candidate_item = MakeItem("", FLT_MAX, 0);
     Vendor candidate_vendor = MakeVendor("", "");
 
-    for (size_t v_i = 0; v_i < vendors.vendors_size(); ++v_i) {
+    for (const auto& vendor : vendors.vendors()) {
       Vendor current_vendor = vendors.vendors(v_i);
       VendorClient vendor(grpc::CreateChannel(
         current_vendor.url(), grpc::InsecureChannelCredentials()));
-      InventoryResponse inventory = vendor.RequestInventoryList(*request);
-      for (size_t i_i = 0; i_i < inventory.inventory_size(); ++i_i) {
+      // Start Span
+      span.AddAnnotation("Requesting Inventory List From: "
+        + current_vendor.name());
+      InventoryResponse inventory = vendor.RequestInventoryList(
+        *request, span);
+      // End Span
+      for (size_t i_i = 0; i_i < (size_t)inventory.inventory_size(); ++i_i) {
         Item current_item = inventory.inventory(i_i);
         std::cout << current_vendor.name() << " - has " 
           << current_item.quantity() << " of " << current_item.name() <<
@@ -84,11 +107,13 @@ class FoodFinderImpl final : public FoodFinderService::Service {
       Vendor* v_ptr = response->mutable_vendor();
       *v_ptr = candidate_vendor;
 
-      Item* i_ptr = response->mutable_inventory();
-      *i_ptr = candidate_item;
+      *response->mutable_inventory() = candidate_item;
 
+      // End Span
+      span.End();
       return Status::OK;
     } else {
+      span.End();
       return Status(StatusCode::NOT_FOUND, "No candidate vendors found");
     }
   }
@@ -117,6 +142,8 @@ void RunServer() {
 }
 
 int main(int argc, char** argv) {
+  RegisterExporters();
+
   RunServer();
 
   return 0;
