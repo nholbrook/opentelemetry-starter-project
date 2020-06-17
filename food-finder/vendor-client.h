@@ -17,10 +17,11 @@
 
 class VendorClient {
   public:
-    VendorClient(std::shared_ptr<grpc_impl::Channel>);
+    VendorClient(std::shared_ptr<grpc_impl::Channel> channel);
 
     foodfinder::InventoryResponse RequestInventoryList(
-    	const foodfinder::SupplyRequest&, const opencensus::trace::Span&);
+    	const foodfinder::SupplyRequest& request,
+    	const opencensus::trace::Span& parentSpan);
 
   private:
     std::unique_ptr<foodfinder::VendorService::Stub> stub_;

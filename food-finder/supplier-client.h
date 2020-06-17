@@ -17,12 +17,13 @@
 
 class SupplierClient {
   public:
-	SupplierClient(std::shared_ptr<grpc_impl::Channel>);
+	SupplierClient(std::shared_ptr<grpc_impl::Channel> channel);
 
 	foodfinder::VendorResponse RequestVendorList(
-		const foodfinder::SupplyRequest&, const opencensus::trace::Span&);
+		const foodfinder::SupplyRequest& request,
+		const opencensus::trace::Span& parentSpan);
 
-	google::protobuf::Empty RegisterVendor(const foodfinder::Vendor&);
+	google::protobuf::Empty RegisterVendor(const foodfinder::Vendor& request);
 
   private:
 	std::unique_ptr<foodfinder::SupplierService::Stub> stub_;

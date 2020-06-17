@@ -59,14 +59,10 @@ using foodfinder::Item;
 
 class FoodFinderImpl final : public FoodFinderService::Service {
 
-  Status RequestSupplyInfo(ServerContext* context, const SupplyRequest* request,
+  Status RequestSupplyInfo(const SupplyRequest* request, ServerContext* context,
      SupplyResponse* response) {
 
-    std::cout << "pre sampler" << std::endl;
-
     static opencensus::trace::AlwaysSampler sampler;
-
-    std::cout << "post sampler" << std::endl;
 
     // Start Span
     auto span = opencensus::trace::Span::StartSpan("RequestSupplyInfo", nullptr,
@@ -83,7 +79,7 @@ class FoodFinderImpl final : public FoodFinderService::Service {
     Item candidate_item = MakeItem("", FLT_MAX, 0);
     Vendor candidate_vendor = MakeVendor("", "");
 
-    for (size_t v_i = 0; v_i < (size_t)vendors.vendors_size(); ++v_i) {
+    for (const auto& vendor : vendors.vendors()) {
       Vendor current_vendor = vendors.vendors(v_i);
       VendorClient vendor(grpc::CreateChannel(
         current_vendor.url(), grpc::InsecureChannelCredentials()));
@@ -111,8 +107,7 @@ class FoodFinderImpl final : public FoodFinderService::Service {
       Vendor* v_ptr = response->mutable_vendor();
       *v_ptr = candidate_vendor;
 
-      Item* i_ptr = response->mutable_inventory();
-      *i_ptr = candidate_item;
+      *response->mutable_inventory() = candidate_item;
 
       // End Span
       span.End();
@@ -148,9 +143,6 @@ void RunServer() {
 
 int main(int argc, char** argv) {
   RegisterExporters();
-
-  opencensus::trace::TraceConfig::SetCurrentTraceParams(
-      {128, 128, 128, 128, opencensus::trace::ProbabilitySampler(1.0)});
 
   RunServer();
 
